@@ -197,7 +197,6 @@
     font-weight: 500;
   }
 
-  /* ── Buttons ── */
   #share-row {
     display: flex;
     align-items: center;
@@ -242,7 +241,6 @@
     font-weight: 600;
   }
 
-  /* ── Loader ── */
   #loader { margin-bottom: 1.5rem; }
   #loader-status { font-size: 13px; margin-bottom: .75rem; font-weight: 500; }
   #loader p {
@@ -277,7 +275,6 @@
   <div id="title">Word Chain</div>
   <div id="daily-label"></div>
 
-  <!-- Loader -->
   <div id="loader">
     <div id="loader-status" class="info">Loading dictionary…</div>
     <div id="fallback" style="display:none">
@@ -292,7 +289,6 @@
     </div>
   </div>
 
-  <!-- Game -->
   <div id="game" style="display:none">
     <div id="chain"></div>
 
@@ -305,7 +301,6 @@
     <div id="bar"></div>
     <div id="score-line"></div>
 
-    <!-- End screen -->
     <div id="end">
       <div class="total" id="final-score"></div>
       <div class="sub"   id="final-sub"></div>
@@ -335,7 +330,7 @@ const SITE_URL     = 'https://rafemurchie.github.io/tinygames/word-chain.html';
 const DICT_URL  = 'https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt';
 const ROUNDS    = 10;
 const MAX_SCORE = ROUNDS * 8;
-const EPOCH     = new Date('2025-01-01');
+const EPOCH     = new Date('2026-05-14');
 
 let DICT = null, SIX_WORDS = [];
 let chain, scores, round, totalPts, dailyWord, dayNumber, isPractice;
