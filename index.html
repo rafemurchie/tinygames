@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tinygames</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --bg:#f0ebe2;
+    --paper:#faf7f2;
+    --ink:#1e1c18;
+    --soft:#7a7368;
+    --line:#ddd7cc;
+    --accent:#c0392b;
+  }
+
+  body{
+    font-family:'Lora',Georgia,serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding:4rem 2rem 6rem;
+  }
+
+  header{
+    max-width:600px;
+    margin:0 auto 4rem;
+    border-bottom:1px solid var(--line);
+    padding-bottom:2rem;
+  }
+
+  header h1{
+    font-family:'DM Mono',monospace;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--soft);
+    margin-bottom:.6rem;
+  }
+
+  header p{
+    font-size:15px;
+    color:var(--soft);
+    font-style:italic;
+    line-height:1.6;
+  }
+
+  #games{
+    max-width:600px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+  }
+
+  .game{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:1.4rem 0;
+    border-bottom:1px solid var(--line);
+    text-decoration:none;
+    color:inherit;
+    gap:1.5rem;
+    transition:padding-left .15s ease;
+  }
+
+  .game:hover{padding-left:.75rem}
+
+  .game:hover .play{color:var(--accent);border-color:var(--accent)}
+
+  .game-info{flex:1}
+
+  .game-name{
+    font-size:20px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:.3rem;
+    line-height:1.2;
+  }
+
+  .game-desc{
+    font-size:14px;
+    color:var(--soft);
+    font-style:italic;
+    line-height:1.5;
+  }
+
+  .play{
+    font-family:'DM Mono',monospace;
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--soft);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:6px 14px;
+    white-space:nowrap;
+    flex-shrink:0;
+    transition:color .15s,border-color .15s;
+    background:transparent;
+  }
+
+  .soon{
+    opacity:.4;
+    cursor:default;
+    pointer-events:none;
+  }
+
+  footer{
+    max-width:600px;
+    margin:3rem auto 0;
+    font-family:'DM Mono',monospace;
+    font-size:11px;
+    color:var(--line);
+    letter-spacing:.08em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>tinygames</h1>
+  <p>just some games</p>
+</header>
+
+<div id="games">
+
+  <a class="game" href="word-chain.html">
+    <div class="game-info">
+      <div class="game-name">Word Chain</div>
+      <div class="game-desc">Link words by overlapping letters. The longer the overlap, the more points.</div>
+    </div>
+    <span class="play">play →</span>
+  </a>
+
+  <div class="game soon">
+    <div class="game-info">
+      <div class="game-name">More soon</div>
+      <div class="game-desc">Another game is on its way.</div>
+    </div>
+    <span class="play">soon</span>
+  </div>
+
+</div>
+
+</body>
+</html>

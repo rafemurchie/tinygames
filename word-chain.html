@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Chain · Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: #f5f3ef;
+    color: #1a1916;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3.5rem 1.5rem 4rem;
+  }
+
+  #g { width: 100%; max-width: 400px; }
+
+  #title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: #1a1916;
+    letter-spacing: -.01em;
+    margin-bottom: .2rem;
+  }
+  #daily-label {
+    font-size: 12px;
+    color: #a09d96;
+    margin-bottom: 2.5rem;
+    font-weight: 500;
+    letter-spacing: .02em;
+  }
+
+  #chain {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e8e4de;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0ece6;
+    animation: fi .18s ease;
+  }
+  .row:last-child { border-bottom: none; }
+  @keyframes fi { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+  .row .word {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1916;
+    letter-spacing: .01em;
+  }
+  .row .pts {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ccc;
+    min-width: 30px;
+    text-align: right;
+  }
+  .hi {
+    background: #d6edd9;
+    color: #235a2c;
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+
+  #prompt {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1.5px solid #e0dbd3;
+    border-radius: 10px;
+    padding: 0 14px;
+    margin-bottom: .6rem;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  #prompt:focus-within {
+    border-color: #3a7d44;
+    box-shadow: 0 0 0 3px rgba(58,125,68,.1);
+  }
+  #arrow { display: none; }
+  #inp {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #1a1916;
+    width: 100%;
+    padding: 13px 0;
+    caret-color: #3a7d44;
+  }
+  #inp::placeholder { color: #c8c3bb; font-weight: 400; }
+
+  #game-status {
+    font-size: 12px;
+    min-height: 16px;
+    margin-bottom: .9rem;
+    font-weight: 500;
+  }
+  .err  { color: #c0392b; }
+  .ok   { color: #3a7d44; }
+  .info { color: #b0a99f; }
+  .warn { color: #b07d2a; }
+
+  #bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: .5rem;
+  }
+  .dot {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: #e6e2db;
+    transition: background .25s ease;
+  }
+  .dot.done { background: #3a7d44; }
+
+  #score-line {
+    font-size: 12px;
+    color: #b0a99f;
+    margin-bottom: 2.5rem;
+    font-weight: 500;
+  }
+
+  #end { display: none; padding-top: .25rem; }
+
+  #end .total {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 52px;
+    font-weight: 400;
+    color: #1a1916;
+    margin-bottom: .15rem;
+    letter-spacing: -.02em;
+    line-height: 1;
+  }
+  #end .sub {
+    font-size: 13px;
+    color: #a09d96;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  #rank-block { margin-bottom: 1.5rem; min-height: 44px; }
+
+  #spark {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 24px;
+    margin-bottom: 7px;
+    opacity: 0;
+    transition: opacity .5s ease .15s;
+  }
+  #spark.visible { opacity: 1; }
+  .spark-col {
+    width: 8px;
+    background: #e6e2db;
+    border-radius: 2px 2px 0 0;
+  }
+  .spark-col.mine { background: #3a7d44; }
+
+  #rank-line {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity .4s ease .3s;
+  }
+  #rank-line.visible { opacity: 1; }
+  #rank-pct {
+    font-size: 18px;
+    font-weight: 600;
+    color: #3a7d44;
+  }
+  #rank-sub {
+    font-size: 12px;
+    color: #a09d96;
+    font-weight: 500;
+  }
+
+  /* ── Buttons ── */
+  #share-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: .75rem;
+  }
+
+  #share-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #1a1916;
+    border: none;
+    color: #f5f3ef;
+    padding: 10px 22px;
+    border-radius: 8px;
+    transition: background .15s;
+    letter-spacing: .01em;
+  }
+  #share-btn:hover { background: #2e2c29; }
+
+  button.restart {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: none;
+    border: 1.5px solid #e0dbd3;
+    color: #a09d96;
+    padding: 10px 22px;
+    border-radius: 8px;
+    transition: border-color .15s, color .15s;
+  }
+  button.restart:hover { border-color: #1a1916; color: #1a1916; }
+
+  #copy-msg {
+    font-size: 12px;
+    color: #3a7d44;
+    opacity: 0;
+    transition: opacity .3s;
+    font-weight: 600;
+  }
+
+  /* ── Loader ── */
+  #loader { margin-bottom: 1.5rem; }
+  #loader-status { font-size: 13px; margin-bottom: .75rem; font-weight: 500; }
+  #loader p {
+    font-size: 13px;
+    color: #a09d96;
+    margin-bottom: .75rem;
+    line-height: 1.6;
+  }
+  #loader a { color: #3a7d44; text-decoration: none; }
+  #loader a:hover { text-decoration: underline; }
+
+  #file-btn {
+    margin-top: .5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: none;
+    border: 1.5px solid #e0dbd3;
+    color: #777;
+    padding: 9px 20px;
+    border-radius: 8px;
+    transition: border-color .15s, color .15s;
+  }
+  #file-btn:hover { border-color: #3a7d44; color: #3a7d44; }
+  #file-input { display: none; }
+</style>
+</head>
+<body>
+<div id="g">
+
+  <div id="title">Word Chain</div>
+  <div id="daily-label"></div>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div id="loader-status" class="info">Loading dictionary…</div>
+    <div id="fallback" style="display:none">
+      <p>
+        Could not fetch the dictionary automatically.<br>
+        Download it yourself:
+        <a href="https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt" target="_blank">enable1.txt</a>
+        (1.5 MB) then load it below.
+      </p>
+      <button id="file-btn" onclick="document.getElementById('file-input').click()">Load dictionary file</button>
+      <input id="file-input" type="file" accept=".txt">
+    </div>
+  </div>
+
+  <!-- Game -->
+  <div id="game" style="display:none">
+    <div id="chain"></div>
+
+    <div id="prompt">
+      <span id="arrow">→</span>
+      <input id="inp" autocomplete="off" spellcheck="false" placeholder="Type a word and press Enter…">
+    </div>
+
+    <div id="game-status" class="info"></div>
+    <div id="bar"></div>
+    <div id="score-line"></div>
+
+    <!-- End screen -->
+    <div id="end">
+      <div class="total" id="final-score"></div>
+      <div class="sub"   id="final-sub"></div>
+
+      <div id="rank-block">
+        <div id="spark"></div>
+        <div id="rank-line">
+          <span id="rank-pct"></span>
+          <span id="rank-sub"></span>
+        </div>
+      </div>
+
+      <div id="share-row">
+        <button id="share-btn">Share result</button>
+        <span id="copy-msg">Copied!</span>
+      </div>
+      <button class="restart" id="restart">Practice mode ↺</button>
+    </div>
+  </div>
+
+</div>
+<script>
+const SUPABASE_URL = 'https://mifucuqnmwxhsgkbkshv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xRnVQPhBLr7W50e85slw3g_Aa8O6W1p';
+const SITE_URL     = 'https://rafemurchie.github.io/tinygames/word-chain.html';
+
+const DICT_URL  = 'https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt';
+const ROUNDS    = 10;
+const MAX_SCORE = ROUNDS * 8;
+const EPOCH     = new Date('2025-01-01');
+
+let DICT = null, SIX_WORDS = [];
+let chain, scores, round, totalPts, dailyWord, dayNumber, isPractice;
+
+function todayString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDayNumber() {
+  return Math.floor((new Date(todayString()) - EPOCH) / 86400000) + 1;
+}
+
+function dateHash(str, len) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h % len;
+}
+
+function getDailyWord(dateStr) {
+  return SIX_WORDS[dateHash(dateStr, SIX_WORDS.length)];
+}
+
+const SB_HEADERS = {
+  'Content-Type':  'application/json',
+  'apikey':        SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Prefer':        'return=minimal'
+};
+
+async function submitScore(date, score) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/daily_scores`, {
+      method: 'POST', headers: SB_HEADERS,
+      body: JSON.stringify({ date, score })
+    });
+  } catch (_) {}
+}
+
+async function fetchPercentile(date, myScore) {
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/daily_scores?select=score&date=eq.${date}`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!r.ok) return null;
+    const rows      = await r.json();
+    const allScores = rows.map(r => r.score);
+    const total     = allScores.length;
+    if (total < 2) return { percentile: null, total, allScores };
+    const beaten    = allScores.filter(s => s < myScore).length;
+    return { percentile: Math.round((beaten / total) * 100), total, allScores };
+  } catch (_) { return null; }
+}
+
+async function loadFromURL() {
+  const r = await fetch(DICT_URL);
+  if (!r.ok) throw new Error(r.status);
+  return buildDict(await r.text());
+}
+
+function buildDict(text) {
+  const words = text.split(/\r?\n/).map(w => w.trim().toLowerCase()).filter(w => /^[a-z]+$/.test(w));
+  DICT      = new Set(words);
+  SIX_WORDS = words.filter(w => w.length === 6).sort();
+  return DICT;
+}
+
+function setLoaderStatus(msg, cls) {
+  const s = document.getElementById('loader-status');
+  s.textContent = msg; s.className = cls;
+}
+
+async function boot() {
+  try {
+    setLoaderStatus('Loading dictionary…', 'info');
+    await loadFromURL();
+    setLoaderStatus(`Ready — ${DICT.size.toLocaleString()} words`, 'ok');
+    setTimeout(startGame, 400);
+  } catch (e) {
+    setLoaderStatus('Could not load dictionary', 'warn');
+    document.getElementById('fallback').style.display = 'block';
+  }
+}
+
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  setLoaderStatus('Reading file…', 'info');
+  const reader = new FileReader();
+  reader.onload = ev => {
+    buildDict(ev.target.result);
+    setLoaderStatus(`Loaded ${DICT.size.toLocaleString()} words`, 'ok');
+    setTimeout(startGame, 400);
+  };
+  reader.readAsText(file);
+});
+
+function overlap(a, b) {
+  for (let k = Math.min(a.length, b.length); k >= 1; k--)
+    if (a.slice(-k) === b.slice(0, k)) return k;
+  return 0;
+}
+
+function renderChain() {
+  const el = document.getElementById('chain');
+  el.innerHTML = '';
+  chain.forEach((w, i) => {
+    const div = document.createElement('div'); div.className = 'row';
+    if (i === 0) {
+      div.innerHTML = `<span class="word">${w}</span><span class="pts" style="color:#ddd">—</span>`;
+    } else {
+      const sc    = scores[i - 1];
+      const wHtml = sc > 0 ? `<span class="hi">${w.slice(0, sc)}</span>${w.slice(sc)}` : w;
+      const ptsCls = sc > 0 ? 'style="color:#3a7d44"' : '';
+      div.innerHTML = `<span class="word">${wHtml}</span><span class="pts" ${ptsCls}>+${sc}</span>`;
+    }
+    el.appendChild(div);
+  });
+}
+
+function renderBar() {
+  const bar = document.getElementById('bar');
+  bar.innerHTML = '';
+  for (let i = 0; i < ROUNDS; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < round ? ' done' : '');
+    bar.appendChild(d);
+  }
+  document.getElementById('score-line').textContent =
+    round > 0 ? `${totalPts} pts · ${round} of ${ROUNDS} words` : `${ROUNDS} words to play`;
+}
+
+function setStatus(msg, cls) {
+  const s = document.getElementById('game-status');
+  s.textContent = msg; s.className = cls;
+}
+
+function getGrade(pct) {
+  return pct >= 80 ? 'legendary' : pct >= 60 ? 'sharp' : pct >= 40 ? 'decent' : pct >= 20 ? 'warming up' : 'keep practicing';
+}
+
+function drawSpark(allScores, myScore) {
+  const BUCKETS = 9;
+  const size    = Math.ceil(MAX_SCORE / BUCKETS);
+  const counts  = new Array(BUCKETS).fill(0);
+  allScores.forEach(s => counts[Math.min(Math.floor(s / size), BUCKETS - 1)]++);
+  const peak = Math.max(...counts, 1);
+  const myB  = Math.min(Math.floor(myScore / size), BUCKETS - 1);
+  const el   = document.getElementById('spark');
+  el.innerHTML = '';
+  counts.forEach((c, i) => {
+    const col = document.createElement('div');
+    col.className = 'spark-col' + (i === myB ? ' mine' : '');
+    col.style.height = Math.max(2, Math.round(c / peak * 24)) + 'px';
+    el.appendChild(col);
+  });
+  requestAnimationFrame(() => el.classList.add('visible'));
+}
+
+async function revealRank(date, myScore) {
+  const result = await fetchPercentile(date, myScore);
+  if (!result) return;
+  const { percentile, total, allScores } = result;
+  drawSpark(allScores, myScore);
+  const pctEl = document.getElementById('rank-pct');
+  const subEl = document.getElementById('rank-sub');
+  if (percentile === null) {
+    pctEl.textContent = total === 1 ? 'First today' : 'Early bird';
+    subEl.textContent = '— you set the benchmark';
+  } else {
+    pctEl.textContent = `Top ${100 - percentile}%`;
+    subEl.textContent = `· beat ${percentile}% of today's ${total} players`;
+  }
+  document.getElementById('rank-line').classList.add('visible');
+}
+
+async function endGame() {
+  document.getElementById('prompt').style.display      = 'none';
+  document.getElementById('game-status').style.display = 'none';
+  document.getElementById('end').style.display         = 'block';
+  document.getElementById('final-score').textContent   = totalPts + ' pts';
+  const pct = Math.round(totalPts / MAX_SCORE * 100);
+  document.getElementById('final-sub').textContent =
+    (isPractice ? 'Practice · ' : `Daily #${dayNumber} · `) + getGrade(pct) + ` · ${pct}% efficiency`;
+  document.getElementById('share-row').style.display = isPractice ? 'none' : 'flex';
+  if (!isPractice) {
+    const date = todayString();
+    await submitScore(date, totalPts);
+    revealRank(date, totalPts);
+  }
+}
+
+function buildShareText() {
+  const pct  = Math.round(totalPts / MAX_SCORE * 100);
+  const dots = scores.map(s => s === 0 ? '⬛' : s <= 2 ? '🟩' : s <= 4 ? '🟨' : '🟦').join('');
+  return [`Word Chain Daily #${dayNumber}`, `${totalPts} pts · ${getGrade(pct)}`, dots, '', SITE_URL].join('\n');
+}
+
+document.getElementById('share-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(buildShareText()).then(() => {
+    const msg = document.getElementById('copy-msg');
+    msg.style.opacity = '1';
+    setTimeout(() => msg.style.opacity = '0', 1800);
+  });
+});
+
+function startGame(practice) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('game').style.display   = 'block';
+
+  isPractice = !!practice;
+  dayNumber  = getDayNumber();
+  dailyWord  = isPractice
+    ? SIX_WORDS[Math.floor(Math.random() * SIX_WORDS.length)]
+    : getDailyWord(todayString());
+
+  document.getElementById('daily-label').textContent =
+    isPractice ? 'Practice mode' : `Daily #${dayNumber} · ${todayString()}`;
+
+  chain = [dailyWord]; scores = []; round = 0; totalPts = 0;
+
+  ['rank-line', 'spark'].forEach(id => document.getElementById(id).classList.remove('visible'));
+  document.getElementById('rank-pct').textContent = '';
+  document.getElementById('rank-sub').textContent = '';
+  document.getElementById('spark').innerHTML = '';
+
+  document.getElementById('prompt').style.display      = 'flex';
+  document.getElementById('game-status').style.display = 'block';
+  document.getElementById('end').style.display         = 'none';
+  document.getElementById('inp').value = '';
+  setStatus('Overlap the end of one word with the start of the next to score', 'info');
+  renderChain(); renderBar();
+  document.getElementById('inp').focus();
+}
+
+document.getElementById('inp').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const val = e.target.value.trim().toLowerCase();
+  if (!val) return;
+  if (!/^[a-z]+$/.test(val)) { setStatus('Letters only', 'err'); return; }
+  if (chain.includes(val))    { setStatus('Already used', 'err'); return; }
+  if (!DICT.has(val))         { setStatus('Not a valid word', 'err'); return; }
+  const sc = overlap(chain[chain.length - 1], val);
+  chain.push(val); scores.push(sc); totalPts += sc; round++;
+  e.target.value = '';
+  setStatus(sc === 0 ? 'No overlap — 0 pts' : `+${sc} pt${sc > 1 ? 's' : ''}`, sc > 0 ? 'ok' : 'info');
+  renderChain(); renderBar();
+  if (round >= ROUNDS) setTimeout(endGame, 600);
+});
+
+document.getElementById('restart').addEventListener('click', () => startGame(true));
+
+boot();
+</script>
+</body>
+</html>
