@@ -364,6 +364,17 @@ const SB_HEADERS = {
   'Prefer':        'return=minimal'
 };
 
+function saveDaily(date, data) {
+  try { localStorage.setItem('wc_daily_' + date, JSON.stringify(data)); } catch (_) {}
+}
+
+function loadDaily(date) {
+  try {
+    const raw = localStorage.getItem('wc_daily_' + date);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+
 async function submitScore(date, score) {
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/daily_scores`, {
@@ -521,6 +532,7 @@ async function endGame() {
   document.getElementById('share-row').style.display = isPractice ? 'none' : 'flex';
   if (!isPractice) {
     const date = todayString();
+    saveDaily(date, { score: totalPts, scores, chain });
     await submitScore(date, totalPts);
     revealRank(date, totalPts);
   }
@@ -546,6 +558,27 @@ function startGame(practice) {
 
   isPractice = !!practice;
   dayNumber  = getDayNumber();
+
+  if (!isPractice) {
+    const saved = loadDaily(todayString());
+    if (saved) {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('game').style.display   = 'block';
+      document.getElementById('daily-label').textContent = `Daily #${dayNumber} · ${todayString()}`;
+      chain = saved.chain; scores = saved.scores; totalPts = saved.score; round = ROUNDS;
+      renderChain(); renderBar();
+      document.getElementById('prompt').style.display      = 'none';
+      document.getElementById('game-status').style.display = 'none';
+      document.getElementById('end').style.display         = 'block';
+      document.getElementById('final-score').textContent   = totalPts + ' pts';
+      const pct = Math.round(totalPts / MAX_SCORE * 100);
+      document.getElementById('final-sub').textContent = `Daily #${dayNumber} · ${getGrade(pct)} · ${pct}% efficiency`;
+      document.getElementById('share-row').style.display = 'flex';
+      revealRank(todayString(), totalPts);
+      return;
+    }
+  }
+
   dailyWord  = isPractice
     ? SIX_WORDS[Math.floor(Math.random() * SIX_WORDS.length)]
     : getDailyWord(todayString());
