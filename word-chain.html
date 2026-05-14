@@ -180,18 +180,23 @@
 
   #rank-line {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
     gap: 6px;
     opacity: 0;
     transition: opacity .4s ease .3s;
   }
   #rank-line.visible { opacity: 1; }
-  #rank-pct {
+  .rank-metric {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .rank-metric .rank-val {
     font-size: 18px;
     font-weight: 600;
     color: #3a7d44;
   }
-  #rank-sub {
+  .rank-metric .rank-label {
     font-size: 12px;
     color: #a09d96;
     font-weight: 500;
@@ -293,7 +298,7 @@
     <div id="chain"></div>
 
     <div id="prompt">
-      <span id="arrow">→</span>
+      <span id="arrow">&#8594;</span>
       <input id="inp" autocomplete="off" spellcheck="false" placeholder="Type a word and press Enter…">
     </div>
 
@@ -308,8 +313,14 @@
       <div id="rank-block">
         <div id="spark"></div>
         <div id="rank-line">
-          <span id="rank-pct"></span>
-          <span id="rank-sub"></span>
+          <div class="rank-metric">
+            <span class="rank-val"   id="rank-place"></span>
+            <span class="rank-label" id="rank-place-sub"></span>
+          </div>
+          <div class="rank-metric">
+            <span class="rank-val"   id="rank-pct"></span>
+            <span class="rank-label" id="rank-pct-sub"></span>
+          </div>
         </div>
       </div>
 
@@ -317,7 +328,7 @@
         <button id="share-btn">Share result</button>
         <span id="copy-msg">Copied!</span>
       </div>
-      <button class="restart" id="restart">Practice mode ↺</button>
+      <button class="restart" id="restart">Practice mode &#8635;</button>
     </div>
   </div>
 
@@ -392,7 +403,7 @@ async function fetchPercentile(date, myScore) {
     );
     if (!r.ok) return null;
     const rows      = await r.json();
-    const allScores = rows.map(r => r.score);
+    const allScores = rows.map(row => row.score);
     const total     = allScores.length;
     if (total < 2) return { percentile: null, total, allScores };
     const beaten    = allScores.filter(s => s < myScore).length;
@@ -420,9 +431,9 @@ function setLoaderStatus(msg, cls) {
 
 async function boot() {
   try {
-    setLoaderStatus('Loading dictionary…', 'info');
+    setLoaderStatus('Loading dictionary\u2026', 'info');
     await loadFromURL();
-    setLoaderStatus(`Ready — ${DICT.size.toLocaleString()} words`, 'ok');
+    setLoaderStatus(`Ready \u2014 ${DICT.size.toLocaleString()} words`, 'ok');
     setTimeout(startGame, 400);
   } catch (e) {
     setLoaderStatus('Could not load dictionary', 'warn');
@@ -432,7 +443,7 @@ async function boot() {
 
 document.getElementById('file-input').addEventListener('change', e => {
   const file = e.target.files[0]; if (!file) return;
-  setLoaderStatus('Reading file…', 'info');
+  setLoaderStatus('Reading file\u2026', 'info');
   const reader = new FileReader();
   reader.onload = ev => {
     buildDict(ev.target.result);
@@ -454,10 +465,10 @@ function renderChain() {
   chain.forEach((w, i) => {
     const div = document.createElement('div'); div.className = 'row';
     if (i === 0) {
-      div.innerHTML = `<span class="word">${w}</span><span class="pts" style="color:#ddd">—</span>`;
+      div.innerHTML = `<span class="word">${w}</span><span class="pts" style="color:#ddd">\u2014</span>`;
     } else {
-      const sc    = scores[i - 1];
-      const wHtml = sc > 0 ? `<span class="hi">${w.slice(0, sc)}</span>${w.slice(sc)}` : w;
+      const sc     = scores[i - 1];
+      const wHtml  = sc > 0 ? `<span class="hi">${w.slice(0, sc)}</span>${w.slice(sc)}` : w;
       const ptsCls = sc > 0 ? 'style="color:#3a7d44"' : '';
       div.innerHTML = `<span class="word">${wHtml}</span><span class="pts" ${ptsCls}>+${sc}</span>`;
     }
@@ -474,7 +485,7 @@ function renderBar() {
     bar.appendChild(d);
   }
   document.getElementById('score-line').textContent =
-    round > 0 ? `${totalPts} pts · ${round} of ${ROUNDS} words` : `${ROUNDS} words to play`;
+    round > 0 ? `${totalPts} pts \u00b7 ${round} of ${ROUNDS} words` : `${ROUNDS} words to play`;
 }
 
 function setStatus(msg, cls) {
@@ -509,14 +520,22 @@ async function revealRank(date, myScore) {
   if (!result) return;
   const { percentile, total, allScores } = result;
   drawSpark(allScores, myScore);
-  const pctEl = document.getElementById('rank-pct');
-  const subEl = document.getElementById('rank-sub');
+  const placeEl    = document.getElementById('rank-place');
+  const placeSubEl = document.getElementById('rank-place-sub');
+  const pctEl      = document.getElementById('rank-pct');
+  const pctSubEl   = document.getElementById('rank-pct-sub');
   if (percentile === null) {
-    pctEl.textContent = total === 1 ? 'First today' : 'Early bird';
-    subEl.textContent = '— you set the benchmark';
+    placeEl.textContent    = total === 1 ? '#1' : 'Early';
+    placeSubEl.textContent = total === 1 ? 'out of 1 player today' : 'one of the first players today';
+    pctEl.textContent      = '\u2014';
+    pctSubEl.textContent   = 'not enough players yet to compare';
   } else {
-    pctEl.textContent = `Top ${100 - percentile}%`;
-    subEl.textContent = `· beat ${percentile}% of today's ${total} players`;
+    const beaten = Math.round(percentile / 100 * total);
+    const place  = total - beaten;
+    placeEl.textContent    = `#${place}`;
+    placeSubEl.textContent = `out of ${total} players today`;
+    pctEl.textContent      = `${percentile}%`;
+    pctSubEl.textContent   = 'of players scored lower than you';
   }
   document.getElementById('rank-line').classList.add('visible');
 }
@@ -528,7 +547,7 @@ async function endGame() {
   document.getElementById('final-score').textContent   = totalPts + ' pts';
   const pct = Math.round(totalPts / MAX_SCORE * 100);
   document.getElementById('final-sub').textContent =
-    (isPractice ? 'Practice · ' : `Daily #${dayNumber} · `) + getGrade(pct) + ` · ${pct}% efficiency`;
+    (isPractice ? 'Practice \u00b7 ' : `Daily #${dayNumber} \u00b7 `) + getGrade(pct) + ` \u00b7 ${pct}% efficiency`;
   document.getElementById('share-row').style.display = isPractice ? 'none' : 'flex';
   if (!isPractice) {
     const date = todayString();
@@ -540,8 +559,8 @@ async function endGame() {
 
 function buildShareText() {
   const pct  = Math.round(totalPts / MAX_SCORE * 100);
-  const dots = scores.map(s => s === 0 ? '⬛' : s <= 2 ? '🟩' : s <= 4 ? '🟨' : '🟦').join('');
-  return [`Word Chain Daily #${dayNumber}`, `${totalPts} pts · ${getGrade(pct)}`, dots, '', SITE_URL].join('\n');
+  const dots = scores.map(s => s === 0 ? '\u2b1b' : s <= 2 ? '🟩' : s <= 4 ? '🟨' : '🟦').join('');
+  return [`Word Chain Daily #${dayNumber}`, `${totalPts} pts \u00b7 ${getGrade(pct)}`, dots, '', SITE_URL].join('\n');
 }
 
 document.getElementById('share-btn').addEventListener('click', () => {
@@ -562,9 +581,7 @@ function startGame(practice) {
   if (!isPractice) {
     const saved = loadDaily(todayString());
     if (saved) {
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('game').style.display   = 'block';
-      document.getElementById('daily-label').textContent = `Daily #${dayNumber} · ${todayString()}`;
+      document.getElementById('daily-label').textContent = `Daily #${dayNumber} \u00b7 ${todayString()}`;
       chain = saved.chain; scores = saved.scores; totalPts = saved.score; round = ROUNDS;
       renderChain(); renderBar();
       document.getElementById('prompt').style.display      = 'none';
@@ -572,25 +589,27 @@ function startGame(practice) {
       document.getElementById('end').style.display         = 'block';
       document.getElementById('final-score').textContent   = totalPts + ' pts';
       const pct = Math.round(totalPts / MAX_SCORE * 100);
-      document.getElementById('final-sub').textContent = `Daily #${dayNumber} · ${getGrade(pct)} · ${pct}% efficiency`;
+      document.getElementById('final-sub').textContent = `Daily #${dayNumber} \u00b7 ${getGrade(pct)} \u00b7 ${pct}% efficiency`;
       document.getElementById('share-row').style.display = 'flex';
       revealRank(todayString(), totalPts);
       return;
     }
   }
 
-  dailyWord  = isPractice
+  dailyWord = isPractice
     ? SIX_WORDS[Math.floor(Math.random() * SIX_WORDS.length)]
     : getDailyWord(todayString());
 
   document.getElementById('daily-label').textContent =
-    isPractice ? 'Practice mode' : `Daily #${dayNumber} · ${todayString()}`;
+    isPractice ? 'Practice mode' : `Daily #${dayNumber} \u00b7 ${todayString()}`;
 
   chain = [dailyWord]; scores = []; round = 0; totalPts = 0;
 
   ['rank-line', 'spark'].forEach(id => document.getElementById(id).classList.remove('visible'));
-  document.getElementById('rank-pct').textContent = '';
-  document.getElementById('rank-sub').textContent = '';
+  document.getElementById('rank-place').textContent     = '';
+  document.getElementById('rank-place-sub').textContent = '';
+  document.getElementById('rank-pct').textContent       = '';
+  document.getElementById('rank-pct-sub').textContent   = '';
   document.getElementById('spark').innerHTML = '';
 
   document.getElementById('prompt').style.display      = 'flex';
@@ -612,7 +631,7 @@ document.getElementById('inp').addEventListener('keydown', e => {
   const sc = overlap(chain[chain.length - 1], val);
   chain.push(val); scores.push(sc); totalPts += sc; round++;
   e.target.value = '';
-  setStatus(sc === 0 ? 'No overlap — 0 pts' : `+${sc} pt${sc > 1 ? 's' : ''}`, sc > 0 ? 'ok' : 'info');
+  setStatus(sc === 0 ? 'No overlap \u2014 0 pts' : `+${sc} pt${sc > 1 ? 's' : ''}`, sc > 0 ? 'ok' : 'info');
   renderChain(); renderBar();
   if (round >= ROUNDS) setTimeout(endGame, 600);
 });
