@@ -559,7 +559,7 @@ async function endGame() {
 
 function buildShareText() {
   const pct  = Math.round(totalPts / MAX_SCORE * 100);
-  const dots = scores.map(s => s === 0 ? '\u2b1b' : s <= 2 ? '🟩' : s <= 4 ? '🟨' : '🟦').join('');
+  const dots = scores.map(s => s <= 2 ? '🟩' : s <= 4 ? '🟨' : '🟦').join('');
   return [`Word Chain Daily #${dayNumber}`, `${totalPts} pts \u00b7 ${getGrade(pct)}`, dots, '', SITE_URL].join('\n');
 }
 
@@ -616,7 +616,9 @@ function startGame(practice) {
   document.getElementById('game-status').style.display = 'block';
   document.getElementById('end').style.display         = 'none';
   document.getElementById('inp').value = '';
-  setStatus('Overlap the end of one word with the start of the next to score', 'info');
+
+  const lastLetter = dailyWord[dailyWord.length - 1].toUpperCase();
+  setStatus(`Must overlap \u2014 start your word with at least \u201c${lastLetter}\u201d`, 'info');
   renderChain(); renderBar();
   document.getElementById('inp').focus();
 }
@@ -628,10 +630,26 @@ document.getElementById('inp').addEventListener('keydown', e => {
   if (!/^[a-z]+$/.test(val)) { setStatus('Letters only', 'err'); return; }
   if (chain.includes(val))    { setStatus('Already used', 'err'); return; }
   if (!DICT.has(val))         { setStatus('Not a valid word', 'err'); return; }
-  const sc = overlap(chain[chain.length - 1], val);
+
+  const prev = chain[chain.length - 1];
+  const sc   = overlap(prev, val);
+
+  if (sc === 0) {
+    const lastLetter = prev[prev.length - 1].toUpperCase();
+    setStatus(`Must overlap \u2014 start your word with \u201c${lastLetter}\u201d`, 'err');
+    return;
+  }
+
   chain.push(val); scores.push(sc); totalPts += sc; round++;
   e.target.value = '';
-  setStatus(sc === 0 ? 'No overlap \u2014 0 pts' : `+${sc} pt${sc > 1 ? 's' : ''}`, sc > 0 ? 'ok' : 'info');
+
+  if (round < ROUNDS) {
+    const nextLast = val[val.length - 1].toUpperCase();
+    setStatus(`+${sc} pt${sc > 1 ? 's' : ''} \u2014 next word must start with \u201c${nextLast}\u201d`, 'ok');
+  } else {
+    setStatus(`+${sc} pt${sc > 1 ? 's' : ''}`, 'ok');
+  }
+
   renderChain(); renderBar();
   if (round >= ROUNDS) setTimeout(endGame, 600);
 });
