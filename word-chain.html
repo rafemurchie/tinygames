@@ -617,8 +617,7 @@ function startGame(practice) {
   document.getElementById('end').style.display         = 'none';
   document.getElementById('inp').value = '';
 
-  const lastLetter = dailyWord[dailyWord.length - 1].toUpperCase();
-  setStatus(`Must overlap \u2014 start your word with at least \u201c${lastLetter}\u201d`, 'info');
+  setStatus('Must overlap with previous word', 'info');
   renderChain(); renderBar();
   document.getElementById('inp').focus();
 }
@@ -635,8 +634,7 @@ document.getElementById('inp').addEventListener('keydown', e => {
   const sc   = overlap(prev, val);
 
   if (sc === 0) {
-    const lastLetter = prev[prev.length - 1].toUpperCase();
-    setStatus(`Must overlap \u2014 start your word with \u201c${lastLetter}\u201d`, 'err');
+    setStatus('Must overlap with previous word', 'err');
     return;
   }
 
@@ -644,8 +642,7 @@ document.getElementById('inp').addEventListener('keydown', e => {
   e.target.value = '';
 
   if (round < ROUNDS) {
-    const nextLast = val[val.length - 1].toUpperCase();
-    setStatus(`+${sc} pt${sc > 1 ? 's' : ''} \u2014 next word must start with \u201c${nextLast}\u201d`, 'ok');
+    setStatus(`+${sc} pt${sc > 1 ? 's' : ''} \u2014 must overlap with previous word`, 'ok');
   } else {
     setStatus(`+${sc} pt${sc > 1 ? 's' : ''}`, 'ok');
   }
