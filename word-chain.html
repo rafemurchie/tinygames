@@ -465,7 +465,7 @@ function renderChain() {
   chain.forEach((w, i) => {
     const div = document.createElement('div'); div.className = 'row';
     if (i === 0) {
-      div.innerHTML = `<span class="word">${w}</span><span class="pts" style="color:#ddd">\u2014</span>`;
+      div.innerHTML = `<span class="word">${w}</span><span class="pts" style="color:#ddd">.</span>`;
     } else {
       const sc     = scores[i - 1];
       const wHtml  = sc > 0 ? `<span class="hi">${w.slice(0, sc)}</span>${w.slice(sc)}` : w;
